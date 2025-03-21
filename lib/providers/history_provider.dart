@@ -11,6 +11,7 @@ class HistoryProvider extends ChangeNotifier {
   }
   void _init() async {
     _historyBox = await Hive.openBox('history');
+
     _history = _historyBox!.values.toList().reversed.toList();
     notifyListeners();
   }
@@ -19,7 +20,7 @@ class HistoryProvider extends ChangeNotifier {
     final timestamp = DateTime.now();
     final newEntry = QRModel(value: value, image: image, timestamp: timestamp);
     _historyBox!.add(newEntry);
-    _history.add(newEntry);
+    _history.insert(0, newEntry);
     notifyListeners();
   }
 

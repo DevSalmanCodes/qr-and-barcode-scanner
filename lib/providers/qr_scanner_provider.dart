@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:provider/provider.dart';
+import 'package:qr_code_scanner/utils/navigation_helper.dart';
 import 'package:qr_code_scanner/utils/pick_image.dart';
+import 'package:qr_code_scanner/utils/play_beep.dart';
 import 'package:qr_code_scanner/utils/show_snackBar.dart';
 import 'package:qr_code_scanner/views/result_view.dart.dart';
+
+import 'history_provider.dart';
 
 class QRCodeScannerProvider extends ChangeNotifier {
   static final MobileScannerController _scannerController =
       MobileScannerController(
     autoStart: true,
-    detectionSpeed: DetectionSpeed.normal,
     facing: CameraFacing.back,
     returnImage: true,
   );
   MobileScannerController get scannerController => _scannerController;
-  bool _isScanning = true;
+  bool _isScanning = false;
   bool get isScanning => _isScanning;
   bool _isTorchEnabled = false;
   bool get isTorchEnabled => _isTorchEnabled;
@@ -39,7 +42,7 @@ class QRCodeScannerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void analyzeImageFromGallery() async {
+  void analyzeImageFromGallery(BuildContext context, bool mounted) async {
     try {
       final image = await pickImageFromGallery();
       if (image == null) return;
@@ -50,7 +53,15 @@ class QRCodeScannerProvider extends ChangeNotifier {
       }
 
       final barcode = result.barcodes.first;
-      Get.to(() => ResultView(result: barcode.rawValue!, path: image));
+      playBeepSound();
+      if (!mounted) return;
+      context.read<HistoryProvider>().addHistory(barcode.rawValue!, image);
+      navigateTo(
+          context,
+          ResultView(
+            result: barcode.rawValue!,
+            path: image,
+          ));
     } catch (e) {
       showSnackBar("Error: $e");
       return;

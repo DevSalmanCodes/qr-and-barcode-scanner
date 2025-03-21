@@ -14,16 +14,22 @@ class HistoryView extends StatelessWidget {
         appBar: AppBar(
           title: const Text('History'),
         ),
-        body: ListView.builder(
-          itemCount: historyProvider.history.length,
-          itemBuilder: (context, index) {
-            final singleHistory = historyProvider.history[index];
-            return ListTile(
-              leading: Image.file(File(singleHistory.image)),
-              title: Text(singleHistory.value),
-              subtitle: Text(singleHistory.timestamp.toString()),
-            );
-          },
+        body: Consumer<HistoryProvider>(
+          builder: (context, provider, child) => ListView.builder(
+            itemCount: historyProvider.history.length,
+            itemBuilder: (context, index) {
+              final singleHistory = historyProvider.history[index];
+              return ListTile(
+                leading: Image.file(File(singleHistory.image)),
+                title: Text(singleHistory.value),
+                subtitle: Text(singleHistory.timestamp.toString()),
+                trailing: GestureDetector(
+                  onTap: () => provider.deleteHistory(index),
+                  child: const Icon(Icons.more_vert),
+                ),
+              );
+            },
+          ),
         ));
   }
 }

@@ -3,12 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
+import 'package:qr_code_scanner/providers/history_provider.dart';
 import 'package:qr_code_scanner/providers/qr_scanner_provider.dart';
+import 'package:qr_code_scanner/utils/navigation_helper.dart';
 import 'package:qr_code_scanner/utils/show_snackbar.dart';
+import 'package:qr_code_scanner/views/history_view.dart';
 import 'package:qr_code_scanner/widgets/drawer_tile.dart';
 import 'package:qr_scanner_overlay/qr_scanner_overlay.dart';
 
 import '../utils/crop_qr_image.dart';
+import '../utils/play_beep.dart';
 import 'result_view.dart.dart';
 
 class QRScannerScreen extends StatefulWidget {
@@ -21,7 +25,6 @@ class QRScannerScreen extends StatefulWidget {
 class _QRScannerScreenState extends State<QRScannerScreen>
     with SingleTickerProviderStateMixin {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  final AudioPlayer _audioPlayer = AudioPlayer();
   late Animation<double> _opacityAnimation;
   late AnimationController _opacityAnimationController;
 
@@ -36,12 +39,12 @@ class _QRScannerScreenState extends State<QRScannerScreen>
         .animate(_opacityAnimationController);
   }
 
-  void _playBeepSound() async {
-    try {
-      await _audioPlayer.play(AssetSource('beep.mp3'), volume: 0.1);
-    } catch (e) {
-      debugPrint('Error playing beep sound: $e');
-    }
+  @override
+  void didChangeDependencies() {
+    Provider.of<QRCodeScannerProvider>(context, listen: false)
+        .scannerController
+        .stop();
+    super.didChangeDependencies();
   }
 
   @override
@@ -103,7 +106,8 @@ class _QRScannerScreenState extends State<QRScannerScreen>
                           color: Colors.white,
                         )),
                     IconButton(
-                        onPressed: () => provider.analyzeImageFromGallery(),
+                        onPressed: () =>
+                            provider.analyzeImageFromGallery(context,mounted),
                         icon: const Icon(
                           Icons.image,
                           color: Colors.white,
@@ -130,10 +134,15 @@ class _QRScannerScreenState extends State<QRScannerScreen>
       drawer: Drawer(
         backgroundColor: Colors.grey.shade900,
         child: ListView(
-          children: const [
-            DrawerTile(icon: Icons.create, title: 'Create QR'),
-            DrawerTile(icon: Icons.history, title: 'History'),
-            DrawerTile(icon: Icons.settings, title: 'Settings')
+          children: [
+            const DrawerTile(icon: Icons.create, title: 'Create QR'),
+            DrawerTile(
+                icon: Icons.history,
+                title: 'History',
+                onTap: () {
+                  navigateTo(context, const HistoryView());
+                }),
+            const DrawerTile(icon: Icons.settings, title: 'Settings')
           ],
         ),
       ),
@@ -141,9 +150,8 @@ class _QRScannerScreenState extends State<QRScannerScreen>
   }
 
   void onDetect(BarcodeCapture? capture) async {
-    if (capture == null || capture.barcodes.isEmpty) return;
-
     final qrProvider = context.read<QRCodeScannerProvider>();
+    if (capture == null || capture.barcodes.isEmpty) return;
     final barcode = capture.barcodes.first;
 
     if (barcode.rawValue == null || barcode.rawValue!.isEmpty) {
@@ -153,13 +161,12 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     if (capture.image == null || barcode.corners.isEmpty) {
       return showSnackBar("Could not capture image properly");
     }
-
     final croppedPath =
         await saveCroppedQRImage(capture.image!, barcode.corners);
-    _playBeepSound();
-
+    playBeepSound();
+    context.read<HistoryProvider>().addHistory(barcode.rawValue!, croppedPath);
+    qrProvider.stopScanning();
     Get.to(() => ResultView(result: barcode.rawValue!, path: croppedPath))!
         .then((_) => qrProvider.startScanning());
-    qrProvider.stopScanning();
   }
 }
