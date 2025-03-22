@@ -1,4 +1,3 @@
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -39,13 +38,6 @@ class _QRScannerScreenState extends State<QRScannerScreen>
         .animate(_opacityAnimationController);
   }
 
-  @override
-  void didChangeDependencies() {
-    Provider.of<QRCodeScannerProvider>(context, listen: false)
-        .scannerController
-        .stop();
-    super.didChangeDependencies();
-  }
 
   @override
   void dispose() {
