@@ -32,13 +32,15 @@ class MyApp extends StatelessWidget {
       ],
       child: GetMaterialApp(
           theme: ThemeData(
-              appBarTheme: const AppBarTheme(
-                  backgroundColor: Colors.blue,
-                  titleTextStyle: TextStyle(
-                      color: Colors.white,
-                      fontSize: 25,
-                      fontWeight: FontWeight.bold),
-                  iconTheme: IconThemeData(color: Colors.white))),
+            appBarTheme: const AppBarTheme(
+                backgroundColor: Colors.blue,
+                titleTextStyle: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold),
+                iconTheme: IconThemeData(color: Colors.white)),
+            scaffoldBackgroundColor: Colors.grey.shade900,
+          ),
           debugShowCheckedModeBanner: false,
           home: const QRScannerScreen()),
     );
