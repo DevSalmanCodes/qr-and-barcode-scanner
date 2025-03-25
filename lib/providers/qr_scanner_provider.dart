@@ -1,38 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
+import 'package:qr_code_scanner/providers/settings_provider.dart';
 import 'package:qr_code_scanner/utils/navigation_helper.dart';
 import 'package:qr_code_scanner/utils/pick_image.dart';
 import 'package:qr_code_scanner/utils/play_beep.dart';
 import 'package:qr_code_scanner/utils/show_snackBar.dart';
+import 'package:qr_code_scanner/utils/vibrate.dart';
 import 'package:qr_code_scanner/views/result_view.dart.dart';
 
 import 'history_provider.dart';
 
 class QRCodeScannerProvider extends ChangeNotifier {
-  static final MobileScannerController _scannerController =
-      MobileScannerController(
-    autoStart: true,
-    facing: CameraFacing.back,
-    returnImage: true,
-  );
-  MobileScannerController get scannerController => _scannerController;
-  bool _isScanning = false;
-  bool get isScanning => _isScanning;
-  bool _isTorchEnabled = false;
-  bool get isTorchEnabled => _isTorchEnabled;
-  void setIsScanning(bool value) {
-    _isScanning = value;
-    notifyListeners();
+  late MobileScannerController _scannerController;
+  QRCodeScannerProvider() {
+    _scannerController = MobileScannerController(
+      autoStart: true,
+      facing: CameraFacing.back,
+      returnImage: true,
+    );
   }
 
+  MobileScannerController get scannerController => _scannerController;
+  bool _isTorchEnabled = false;
+  bool get isTorchEnabled => _isTorchEnabled;
+
   void stopScanning() {
-    setIsScanning(false);
     _scannerController.stop();
   }
 
   void startScanning() {
-    setIsScanning(true);
     _scannerController.start();
   }
 
@@ -43,6 +40,7 @@ class QRCodeScannerProvider extends ChangeNotifier {
   }
 
   void analyzeImageFromGallery(BuildContext context, bool mounted) async {
+    final settingsProvider = context.read<SettingsProvider>();
     try {
       final image = await pickImageFromGallery();
       if (image == null) return;
@@ -53,7 +51,13 @@ class QRCodeScannerProvider extends ChangeNotifier {
       }
 
       final barcode = result.barcodes.first;
-      playBeepSound();
+
+      if (settingsProvider.vibrate == true) {
+        vibrate();
+      }
+      if (settingsProvider.beep == true) {
+        playBeepSound();
+      }
       if (!mounted) return;
       context.read<HistoryProvider>().addHistory(barcode.rawValue!, image);
       navigateTo(

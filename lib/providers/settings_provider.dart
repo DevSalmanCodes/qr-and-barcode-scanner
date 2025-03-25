@@ -32,6 +32,7 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+
   void _putValue(String key, bool value) async {
     await _settingsBox?.put(key, value);
   }
