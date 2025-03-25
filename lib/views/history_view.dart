@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_code_scanner/constants/text_style.dart';
 import 'package:qr_code_scanner/providers/history_provider.dart';
+import 'package:qr_code_scanner/views/result_view.dart.dart';
 
 class HistoryView extends StatelessWidget {
   const HistoryView({super.key});
@@ -21,30 +22,42 @@ class HistoryView extends StatelessWidget {
             itemBuilder: (context, index) {
               final singleHistory = historyProvider.history[index];
               return ListTile(
-                leading: Image.file(File(singleHistory.image)),
-                title: Text(
-                  singleHistory.value,
-                  style: textStyle(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(singleHistory.timestamp.toString(),
-                    style: textStyle()),
-                trailing: PopupMenuButton(
-                    color: Colors.grey.shade900,
-                    iconColor: Colors.white,
-                    itemBuilder: (context) => [
-                          PopupMenuItem(
-                            child: const Icon(
-                              Icons.delete,
-                              color: Colors.white,
-                            ),
-                            onTap: () => provider.deleteHistory(index),
-                          )
-                        ]),
-              );
+                  leading: Image.file(File(singleHistory.image)),
+                  title: Text(
+                    singleHistory.value,
+                    style: textStyle(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Text(singleHistory.timestamp.toString(),
+                      style: textStyle()),
+                  trailing: _buildPopupButton(provider, index),
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ResultView(
+                          result: singleHistory.value,
+                          path: singleHistory.image,
+                        ),
+                      )));
             },
           ),
         ));
+  }
+
+  PopupMenuButton<dynamic> _buildPopupButton(
+      HistoryProvider provider, int index) {
+    return PopupMenuButton(
+        color: Colors.grey.shade900,
+        iconColor: Colors.white,
+        itemBuilder: (context) => [
+              PopupMenuItem(
+                child: const Icon(
+                  Icons.delete,
+                  color: Colors.white,
+                ),
+                onTap: () => provider.deleteHistory(index),
+              )
+            ]);
   }
 }

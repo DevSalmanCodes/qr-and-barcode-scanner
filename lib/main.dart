@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_code_scanner/models/qr_model.dart';
 import 'package:qr_code_scanner/providers/qr_scanner_provider.dart';
+import 'package:qr_code_scanner/providers/settings_provider.dart';
 import 'package:qr_code_scanner/views/qr_scanner_view.dart';
 
 import 'providers/history_provider.dart';
@@ -13,6 +14,7 @@ void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(QRModelAdapter());
   await Hive.openBox<QRModel>('history');
+  await Hive.openBox('settings');
 
   runApp(const MyApp());
 }
@@ -29,6 +31,7 @@ class MyApp extends StatelessWidget {
           create: (context) => HistoryProvider(),
           lazy: false,
         ),
+        ChangeNotifierProvider(create: (context) => SettingsProvider())
       ],
       child: GetMaterialApp(
           theme: ThemeData(
@@ -40,6 +43,12 @@ class MyApp extends StatelessWidget {
                     fontWeight: FontWeight.bold),
                 iconTheme: IconThemeData(color: Colors.white)),
             scaffoldBackgroundColor: Colors.grey.shade900,
+            checkboxTheme: CheckboxThemeData(
+              fillColor: WidgetStateProperty.all(Colors.blue),
+              checkColor: WidgetStateProperty.all(
+                Colors.white,
+              ),
+            ),
           ),
           debugShowCheckedModeBanner: false,
           home: const QRScannerScreen()),

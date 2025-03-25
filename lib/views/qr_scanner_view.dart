@@ -4,9 +4,12 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_code_scanner/providers/history_provider.dart';
 import 'package:qr_code_scanner/providers/qr_scanner_provider.dart';
+import 'package:qr_code_scanner/providers/settings_provider.dart';
 import 'package:qr_code_scanner/utils/navigation_helper.dart';
 import 'package:qr_code_scanner/utils/show_snackbar.dart';
+import 'package:qr_code_scanner/utils/vibrate.dart';
 import 'package:qr_code_scanner/views/history_view.dart';
+import 'package:qr_code_scanner/views/settings_view.dart';
 import 'package:qr_code_scanner/widgets/drawer_tile.dart';
 import 'package:qr_scanner_overlay/qr_scanner_overlay.dart';
 
@@ -37,7 +40,6 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     _opacityAnimation = Tween<double>(begin: 0.0, end: 0.8)
         .animate(_opacityAnimationController);
   }
-
 
   @override
   void dispose() {
@@ -99,7 +101,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
                         )),
                     IconButton(
                         onPressed: () =>
-                            provider.analyzeImageFromGallery(context,mounted),
+                            provider.analyzeImageFromGallery(context, mounted),
                         icon: const Icon(
                           Icons.image,
                           color: Colors.white,
@@ -131,10 +133,12 @@ class _QRScannerScreenState extends State<QRScannerScreen>
             DrawerTile(
                 icon: Icons.history,
                 title: 'History',
-                onTap: () {
-                  navigateTo(context, const HistoryView());
-                }),
-            const DrawerTile(icon: Icons.settings, title: 'Settings')
+                onTap: () => navigateTo(context, const HistoryView())),
+            DrawerTile(
+              icon: Icons.settings,
+              title: 'Settings',
+              onTap: () => navigateTo(context, const SettingsView()),
+            )
           ],
         ),
       ),
@@ -143,6 +147,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
 
   void onDetect(BarcodeCapture? capture) async {
     final qrProvider = context.read<QRCodeScannerProvider>();
+    final settingsProvider = context.read<SettingsProvider>();
     if (capture == null || capture.barcodes.isEmpty) return;
     final barcode = capture.barcodes.first;
 
@@ -155,7 +160,13 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     }
     final croppedPath =
         await saveCroppedQRImage(capture.image!, barcode.corners);
-    playBeepSound();
+    if (!mounted) return;
+    if (settingsProvider.vibrate == true) {
+      vibrate();
+    }
+    if (settingsProvider.beep == true) {
+      playBeepSound();
+    }
     context.read<HistoryProvider>().addHistory(barcode.rawValue!, croppedPath);
     qrProvider.stopScanning();
     Get.to(() => ResultView(result: barcode.rawValue!, path: croppedPath))!
